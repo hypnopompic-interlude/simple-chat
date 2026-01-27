@@ -7,7 +7,7 @@ namespace SimpleChat.Server.Chats;
 
 internal sealed class GroupService(IMulticastGroupProvider groupProvider) : IDisposable, IGroupService
 {
-    private const string GroupName = "ChatGroup";
+    private const string GroupName = "PublicChatGroup";
 
     private readonly IMulticastAsyncGroup<ChatUser, IChatHubReceiver> _group
         = groupProvider.GetOrAddGroup<ChatUser, IChatHubReceiver>(GroupName);
