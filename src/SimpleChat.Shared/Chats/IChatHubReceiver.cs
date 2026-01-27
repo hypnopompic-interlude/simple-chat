@@ -4,7 +4,7 @@ public interface IChatHubReceiver
 {
     void OnReceiveMessage(MessageRecievedEvent message);
     void OnReceiveMessage(string message);
-    void OnUserJoined(string userName);
+    void OnUserJoined(string token);    
 
-    void OnUserDisconnected(string userName);
+    void OnError(ErrorModel error);
 }

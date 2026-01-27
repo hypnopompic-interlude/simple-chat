@@ -1,14 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using SimpleChat.Shared.Users;
 
 namespace SimpleChat.Shared.Chats;
 
 public interface ISystemMessageProvider
 {
-    public string InvalidUserNameMessage {  get; }
-    public string SystemName { get; }
-    public string UserJoinedChatMessage { get; }
+    string GetInvalidUserNameMessage(string userName);
+    string SystemPrefix { get; }
+    string GetUserJoinedChatMessage(string userName);
+    string GetUserLeaveChatMessage(string userName);
+    ChatUser GetSystem();
 }
