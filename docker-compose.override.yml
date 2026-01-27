@@ -1,0 +1,60 @@
+services:
+    kibana:
+        image: docker.elastic.co/kibana/kibana:8.6.1
+        environment:
+            ELASTICSEARCH_HOSTS: http://elasticsearch:9200
+        ports:
+            - "5601:5601"
+  
+    elasticsearch:
+        image: docker.elastic.co/elasticsearch/elasticsearch:8.6.1
+        environment:
+            - discovery.type=single-node
+        ports:
+            - "9200:9200"
+            - "9300:9300"
+        volumes:
+            - elasticsearch-data:/usr/share/elasticsearch/data
+        networks:
+            - elk-network
+
+    redis:
+        image: redis:latest
+        container_name: redis_container
+        restart: always
+        ports:
+            - "6379:6379"
+        volumes:
+            - redis_data:/data
+        networks:
+            - elk-network
+
+
+    simplechat.server:
+        environment:
+            - ASPNETCORE_ENVIRONMENT=Development            
+            - ASPNETCORE_HTTPS_PORTS=8081
+            - ASPNETCORE_HTTP_PORTS=8080
+        ports:
+            - "8080:8080"
+            - "8081:8081"
+        volumes:
+            - ${APPDATA}/Microsoft/UserSecrets:/home/app/.microsoft/usersecrets:ro
+            - ${APPDATA}/Microsoft/UserSecrets:/root/.microsoft/usersecrets:ro
+            - ${APPDATA}/ASP.NET/Https:/home/app/.aspnet/https:ro
+            - ${APPDATA}/ASP.NET/Https:/root/.aspnet/https:ro        
+        networks:
+            - elk-network
+        depends_on: 
+            - elasticsearch
+            - redis
+
+volumes:
+  elasticsearch-data:
+  redis_data:
+    driver: local
+
+
+networks:
+  elk-network:
+    driver: bridge

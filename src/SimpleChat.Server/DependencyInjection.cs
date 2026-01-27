@@ -8,6 +8,7 @@ using SimpleChat.Server.Users;
 using SimpleChat.Shared.Chats;
 using SimpleChat.Shared.Services;
 using SimpleChat.Shared.Users;
+using StackExchange.Redis;
 
 namespace Microsoft.Extensions.DependencyInjection;
 
@@ -20,8 +21,8 @@ public static class DependencyInjection
         services.AddMagicOnion()
             .UseRedisGroup(options =>
             {
-                options.ConnectionString = settings?.RedisConnectionString ?? string.Empty;
-                //options.ConnectionMultiplexer = ConnectionMultiplexer.Connect("localhost:6379");
+                // options.ConnectionString = settings?.RedisConnectionString ?? "http://localhost:6379,abortConnect=false";
+                options.ConnectionMultiplexer = ConnectionMultiplexer.Connect(settings?.RedisConnectionString ?? "http://localhost:6379,abortConnect=false");
             });
 
         services.AddSingleton<IGroupService, GroupService>();
@@ -36,6 +37,8 @@ public static class DependencyInjection
     public static IServiceCollection AddAppAuthentication(this IServiceCollection services, IConfiguration configuration)
     {
         var jwtSettings = configuration.GetSection(nameof(JwtBearerSettings)).Get<JwtBearerSettings>();
+
+        services.AddHttpContextAccessor();
 
         services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             .AddJwtBearer(options =>
@@ -57,8 +60,10 @@ public static class DependencyInjection
             });
 
         services.Configure<JwtBearerSettings>(configuration.GetSection(JwtBearerSettings.Section));
-        services.AddScoped<ICurrentUser, CurrentUser>();
+
+        services.AddTransient<ICurrentUser, CurrentUser>();
         services.AddSingleton<ITokenGenerator, JwtTokenGenerator>();
+        services.AddSingleton<IUserValidator, UserValidator>();
 
         return services;
     }

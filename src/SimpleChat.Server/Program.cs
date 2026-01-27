@@ -6,11 +6,11 @@ builder.AddLogging();
 
 builder.Services.AddAppAuthentication(builder.Configuration);
 
+builder.Services.AddAuthorization();
+
 builder.Services.AddCommunication(builder.Configuration);
 
 builder.Services.AddBackgroundJobs(builder.Configuration);
-
-builder.Services.AddAuthorization();
 
 var app = builder.Build();
 
