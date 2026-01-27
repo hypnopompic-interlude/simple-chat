@@ -1,10 +1,20 @@
-﻿using SimpleChat.Shared.Chats;
+﻿using SimpleChat.Shared;
+using SimpleChat.Shared.Chats;
+using SimpleChat.Shared.Users;
 
 namespace SimpleChat.Server.Chats;
 
-public interface IGroupService
+public interface IGroupService: IMembershipService
 {
-    ValueTask AddMemberAsync(Guid connectionId, IChatHubReceiver receiver, CancellationToken cancellationToken = default);
-    ValueTask RemoveMemberAsync(Guid connectionId, CancellationToken cancellationToken = default);
-    void SendMessageToAll(MessageRecievedEvent message);
+    void BroadcastMessage(ChatTextMessageModel message);
+    void SendMessage(ChatUser receipient, ChatTextMessageModel message);
+    void SendToken(ChatUser receipient, string token);
+    bool Contains(ChatUser user);
+    void SendError(ChatUser receipient, Error error);
+}
+
+public interface IMembershipService
+{
+    ValueTask AddMemberAsync(ChatUser user, IChatHubReceiver receiver, CancellationToken cancellationToken = default);
+    ValueTask RemoveMemberAsync(ChatUser user, CancellationToken cancellationToken = default);
 }

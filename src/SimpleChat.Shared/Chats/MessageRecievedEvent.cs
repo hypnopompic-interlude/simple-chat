@@ -6,9 +6,7 @@ namespace SimpleChat.Shared.Chats;
 public class MessageRecievedEvent
 {
     [Key(0)]
-    public required string UserName { get; init; }
+    public required ChatTextMessageModel Message { get; set; }
     [Key(1)]
-    public required string Content { get; init; }
-    [Key(2)]
-    public DateTime Timestamp { get; init; } = DateTime.UtcNow;
+    public DateTime Timestamp { get; set; } = DateTime.UtcNow;
 }
