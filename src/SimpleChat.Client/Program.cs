@@ -5,7 +5,6 @@ Console.WriteLine("Hello, Chat!");
 
 var client = ChatClient.Instance;
 
-Console.WriteLine("Type a name then press enter.");
 
 int counter = 0;
 
@@ -13,11 +12,15 @@ string userName = string.Empty;
 
 while (counter++ < 42 && client.IsConnected is false)
 {
+    Console.WriteLine("Type a name then press enter.");
+
     userName = Console.ReadLine();
 
-    Console.WriteLine(userName);
-
     await client.ConnectAsync(userName);
+
+    Console.WriteLine(client.IsConnected);
+
+    if (client.IsConnected) break;
 }
 
 if (counter == 42) return;
@@ -27,6 +30,8 @@ Console.WriteLine("Send message to chat");
 while (client is not null && client.IsConnected)
 {
     var text = Console.ReadLine();
+
+    if (string.IsNullOrWhiteSpace(text)) continue;
 
     await client.SendMessageAsync(text);
 }

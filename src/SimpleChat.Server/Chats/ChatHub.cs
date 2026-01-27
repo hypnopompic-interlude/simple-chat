@@ -26,6 +26,7 @@ public class ChatHub : StreamingHubBase<IChatHub, IChatHubReceiver>, IChatHub
         ICurrentUser currentUser 
         )
     {
+        _currentUser = currentUser;
         _groupService = groupService ?? throw new ArgumentNullException(nameof(groupService));
         _systemMessageProvider = systemMessageProvider ?? throw new ArgumentNullException(nameof(systemMessageProvider));
         _userValidator = userValidator ?? throw new ArgumentNullException(nameof(userValidator));
@@ -44,7 +45,7 @@ public class ChatHub : StreamingHubBase<IChatHub, IChatHubReceiver>, IChatHub
 
         bool isMember = _groupService.Contains(user);
 
-        if (isMember is true || _userValidator.IsValidNickName(user) is false) 
+        if (_userValidator.IsValidNickName(user) is false) 
         {
             Client.OnReceiveMessage(
                 new MessageRecievedEvent 

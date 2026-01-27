@@ -19,7 +19,7 @@ public class ChatMessageBuilder : IMessageBuilder
 
     public Result<string> Build()
     {
-        if (ValidatePrefix(_prefix) is false || ValidateContent(_content))
+        if (ValidatePrefix(_prefix) is false || ValidateContent(_content) is false)
         {
             return Error.ConditionNotMet;
         }
