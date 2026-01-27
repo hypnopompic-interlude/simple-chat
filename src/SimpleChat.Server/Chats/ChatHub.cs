@@ -38,7 +38,7 @@ public class ChatHub : StreamingHubBase<IChatHub, IChatHubReceiver>, IChatHub
     }
 
     [AllowAnonymous]
-    public async ValueTask JoinAsync(string userName, CancellationToken cancellationToken = default)
+    public async ValueTask JoinAsync(string userName)
     {
         var user = new ChatUser(ConnectionId, userName);
 
@@ -58,7 +58,7 @@ public class ChatHub : StreamingHubBase<IChatHub, IChatHubReceiver>, IChatHub
         }
         try
         {
-            await _groupService.AddMemberAsync(user, Client, cancellationToken);
+            await _groupService.AddMemberAsync(user, Client);
 
             string token = _tokenGenerator.GenerateToken(user);
 
@@ -90,7 +90,7 @@ public class ChatHub : StreamingHubBase<IChatHub, IChatHubReceiver>, IChatHub
         _groupService.SendError(user, error);
     }
     [Authorize]
-    public async ValueTask LeaveAsync(CancellationToken cancellationToken = default)
+    public async ValueTask LeaveAsync()
     {
         var user = new ChatUser(ConnectionId, _currentUser?.Name ?? string.Empty);
 
@@ -110,7 +110,7 @@ public class ChatHub : StreamingHubBase<IChatHub, IChatHubReceiver>, IChatHub
                 ));
     }
     [Authorize]
-    public ValueTask SendMessageAsync(SendMessageRequest message, CancellationToken cancellationToken = default)
+    public ValueTask SendMessageAsync(SendMessageRequest message)
     {
         if (_userValidator.IsValidNickName(_currentUser?.Name ?? string.Empty))
         {
