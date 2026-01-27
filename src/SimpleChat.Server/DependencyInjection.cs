@@ -28,6 +28,8 @@ public static class DependencyInjection
 
         services.AddTransient<INotificationSender<ChatTextMessageModel>, ChatNotificationSender>();
 
+        services.AddSingleton<ISystemMessageProvider, ChatSystemMessageProvider>();
+
         return services;
     }
 
@@ -72,7 +74,7 @@ public static class DependencyInjection
                 .AddJob<ServerNotificationProcessingJob>(jobKey, default(Action<IJobConfigurator>))
                 .AddTrigger(
                     trigger => trigger.ForJob(jobKey).WithSimpleSchedule(
-                        schedule => schedule.WithIntervalInSeconds(ServerNotificationProcessingJob.ProcessingTimeSpanSec).RepeatForever()));
+                        schedule => schedule.WithIntervalInSeconds(settings.PeriodicNotificationTimeSpanSec).RepeatForever()));
         });
 
         services.AddQuartzHostedService(options =>

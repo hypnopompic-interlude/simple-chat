@@ -1,4 +1,5 @@
 ﻿using Cysharp.Runtime.Multicast.Distributed.Redis;
+using MagicOnion.Server;
 using MagicOnion.Server.Hubs;
 using Microsoft.AspNetCore.Authorization;
 using SimpleChat.Shared;
@@ -9,6 +10,7 @@ namespace SimpleChat.Server.Chats;
 
 [GroupConfiguration(typeof(RedisGroupProvider))]
 [Authorize]
+[FromTypeFilter(typeof(ExceptionHandlingFilterAttribute))]
 public class ChatHub : StreamingHubBase<IChatHub, IChatHubReceiver>, IChatHub
 {
     private readonly IUserValidator _userValidator;
