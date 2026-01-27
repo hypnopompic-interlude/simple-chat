@@ -2,7 +2,8 @@
 
 public interface IChatService
 {
-    ValueTask JoinAsync(string userName);
+    ValueTask ConnectAsync(string userName);
+    ValueTask JoinAsync();
     ValueTask SendMessageAsync(SendMessageRequest message);
     ValueTask LeaveAsync();
 }

@@ -16,12 +16,11 @@ while (counter++ < 42 && client.IsConnected is false)
 
     userName = Console.ReadLine();
 
-    await client.ConnectAsync(userName);
-
-    Console.WriteLine(client.IsConnected);
+    await client.ConnectAsync(userName);    
 
     if (client.IsConnected) break;
 }
+Console.WriteLine("You are connected to chat");
 
 if (counter == 42) return;
 
