@@ -9,7 +9,7 @@ using SimpleChat.Shared.Users;
 namespace SimpleChat.Server.Chats;
 
 [GroupConfiguration(typeof(RedisGroupProvider))]
-[Authorize]
+
 [FromTypeFilter(typeof(ExceptionHandlingFilterAttribute))]
 public class ChatHub : StreamingHubBase<IChatHub, IChatHubReceiver>, IChatHub
 {
@@ -19,14 +19,14 @@ public class ChatHub : StreamingHubBase<IChatHub, IChatHubReceiver>, IChatHub
     private readonly ISystemMessageProvider _systemMessageProvider;
     private readonly ITokenGenerator _tokenGenerator;
     public ChatHub(
-        IGroupService groupService,
-        ICurrentUser currentUser,
+        IGroupService groupService,        
         ISystemMessageProvider systemMessageProvider,
         IUserValidator userValidator,
-        ITokenGenerator tokenGenerator)
+        ITokenGenerator tokenGenerator,
+        ICurrentUser currentUser 
+        )
     {
         _groupService = groupService ?? throw new ArgumentNullException(nameof(groupService));
-        _currentUser = currentUser ?? throw new ArgumentNullException(nameof(currentUser));
         _systemMessageProvider = systemMessageProvider ?? throw new ArgumentNullException(nameof(systemMessageProvider));
         _userValidator = userValidator ?? throw new ArgumentNullException(nameof(userValidator));
         _tokenGenerator = tokenGenerator ?? throw new ArgumentNullException(nameof(tokenGenerator));
@@ -38,7 +38,7 @@ public class ChatHub : StreamingHubBase<IChatHub, IChatHubReceiver>, IChatHub
     }
 
     [AllowAnonymous]
-    public async ValueTask JoinAsync(string userName, CancellationToken cancellationToken = default)
+    public async ValueTask JoinAsync(string userName)
     {
         var user = new ChatUser(ConnectionId, userName);
 
@@ -46,13 +46,19 @@ public class ChatHub : StreamingHubBase<IChatHub, IChatHubReceiver>, IChatHub
 
         if (isMember is true || _userValidator.IsValidNickName(user) is false) 
         {
-            Client.OnReceiveMessage(_systemMessageProvider.GetInvalidUserNameMessage(userName));
+            Client.OnReceiveMessage(
+                new MessageRecievedEvent 
+                {
+                    Message = ChatTextMessageModel.Create(
+                        userName,
+                        _systemMessageProvider.GetInvalidUserNameMessage(userName))
+                });
 
             return; 
         }
         try
         {
-            await _groupService.AddMemberAsync(user, Client, cancellationToken);
+            await _groupService.AddMemberAsync(user, Client);
 
             string token = _tokenGenerator.GenerateToken(user);
 
@@ -82,11 +88,11 @@ public class ChatHub : StreamingHubBase<IChatHub, IChatHubReceiver>, IChatHub
         Context.CallContext.Status = Grpc.Core.Status.DefaultCancelled;
 
         _groupService.SendError(user, error);
-    } 
-
-    public async ValueTask LeaveAsync(CancellationToken cancellationToken = default)
+    }
+    [Authorize]
+    public async ValueTask LeaveAsync()
     {
-        var user = new ChatUser(ConnectionId, _currentUser.Name);
+        var user = new ChatUser(ConnectionId, _currentUser?.Name ?? string.Empty);
 
         if (_groupService.Contains(user) is false || _userValidator.IsValidNickName(user) is false)
         {
@@ -103,10 +109,10 @@ public class ChatHub : StreamingHubBase<IChatHub, IChatHubReceiver>, IChatHub
                 _systemMessageProvider.GetUserLeaveChatMessage(user.Name)
                 ));
     }
-
-    public ValueTask SendMessageAsync(SendMessageRequest message, CancellationToken cancellationToken = default)
+    [Authorize]
+    public ValueTask SendMessageAsync(SendMessageRequest message)
     {
-        if (_userValidator.IsValidNickName(_currentUser.Name))
+        if (_userValidator.IsValidNickName(_currentUser?.Name ?? string.Empty))
         {
             _groupService.BroadcastMessage(ChatTextMessageModel.Create(_currentUser.Name, message.Content));
         }

@@ -2,7 +2,7 @@
 
 namespace SimpleChat.Server.Users;
 
-public class UserValidator : IUserValidator
+internal sealed class UserValidator : IUserValidator
 {
     public bool IsValidNickName(string name)
     {

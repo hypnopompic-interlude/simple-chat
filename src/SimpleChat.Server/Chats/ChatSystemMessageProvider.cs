@@ -18,7 +18,7 @@ public class ChatSystemMessageProvider : ISystemMessageProvider
 
     public ChatUser GetSystem() => _system;
 
-    public string GetSystemGreatingMessage() => string.Format("Hello chat members at {0}}", DateTime.UtcNow);
+    public string GetSystemGreatingMessage() => string.Format("Hello chat members at {0}", DateTime.UtcNow);
 
     public string GetUserJoinedChatMessage(string userName) => string.Format("{0} Has Joined Chat at {1}", userName, DateTime.UtcNow);
 

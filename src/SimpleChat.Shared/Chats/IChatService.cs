@@ -2,7 +2,7 @@
 
 public interface IChatService
 {
-    ValueTask JoinAsync(string userName, CancellationToken cancellationToken = default);
-    ValueTask SendMessageAsync(SendMessageRequest message, CancellationToken cancellationToken = default);
-    ValueTask LeaveAsync(CancellationToken cancellationToken = default);
+    ValueTask JoinAsync(string userName);
+    ValueTask SendMessageAsync(SendMessageRequest message);
+    ValueTask LeaveAsync();
 }

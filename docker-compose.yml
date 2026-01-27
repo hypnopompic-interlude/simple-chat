@@ -1,0 +1,6 @@
+services:
+  simplechat.server:
+    image: ${DOCKER_REGISTRY-}simplechatserver
+    build:
+      context: .
+      dockerfile: src/SimpleChat.Server/Dockerfile

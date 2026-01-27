@@ -2,8 +2,10 @@
 
 public interface IChatHubReceiver
 {
+    bool IsConnected { get; }
+
     void OnReceiveMessage(MessageRecievedEvent message);
-    void OnReceiveMessage(string message);
+    
     void OnUserJoined(string token);    
 
     void OnError(ErrorModel error);
