@@ -8,5 +8,6 @@ public interface ISystemMessageProvider
     string SystemPrefix { get; }
     string GetUserJoinedChatMessage(string userName);
     string GetUserLeaveChatMessage(string userName);
+    string GetSystemGreatingMessage();
     ChatUser GetSystem();
 }
