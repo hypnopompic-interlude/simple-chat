@@ -1,4 +1,8 @@
+using SimpleChat.Server.Logging;
+
 var builder = WebApplication.CreateBuilder(args);
+
+builder.AddLogging();
 
 builder.Services.AddAppAuthentication(builder.Configuration);
 
