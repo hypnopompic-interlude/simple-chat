@@ -9,11 +9,12 @@ public class ChatClient : IChatHubReceiver
 {
     public static ChatClient Instance => new();
 
-    private IChatHub _hub;
+    private IChatHub _joinHub;
+    private IChatHub _workerHub;
     private GrpcChannel _channel;
     private string _bearer;
     private readonly IMessageBuilder _messageBuilder = new ChatMessageBuilder();
-    private readonly string _host = "http://localhost:8080"; //"https://localhost:8081"
+    private readonly string _host = "http://localhost:5013"; // "https://localhost:7169"
 
 
     public bool IsConnected => string.IsNullOrWhiteSpace(_bearer) is false;
@@ -26,6 +27,7 @@ public class ChatClient : IChatHubReceiver
                 "System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", true);
 
             var httpHandler = new HttpClientHandler();
+
             httpHandler.UseProxy = false;
             httpHandler.ClientCertificateOptions = ClientCertificateOption.Manual;
             httpHandler.ServerCertificateCustomValidationCallback =
@@ -36,15 +38,19 @@ public class ChatClient : IChatHubReceiver
                 HttpHandler = httpHandler
             });
 
-            _hub = await StreamingHubClient.ConnectAsync<IChatHub, IChatHubReceiver>(_channel, this);
+            _joinHub = await StreamingHubClient.ConnectAsync<IChatHub, IChatHubReceiver>(_channel, this);
 
-            await _hub.JoinAsync(userName);
+            await _joinHub.JoinAsync(userName);
         }
         catch (RpcException ex) 
         {
             Console.WriteLine(ex.Message);
 
             Console.WriteLine("Chat is unavailable. server connection error. Try again later");
+        }
+        finally
+        {
+            _joinHub.DisposeAsync().GetAwaiter().GetResult();
         }
     }
 
@@ -57,13 +63,13 @@ public class ChatClient : IChatHubReceiver
             return;
         }
 
-        await _hub.SendMessageAsync(new SendMessageRequest { Content = message});
+        await _workerHub.SendMessageAsync(new SendMessageRequest { Content = message});
     }
 
     public async Task DisconnectAsync()
     {
-        await _hub.LeaveAsync();
-        await _hub.DisposeAsync();
+        await _workerHub.LeaveAsync();
+        await _workerHub.DisposeAsync();
         await _channel.ShutdownAsync();
     }
 
@@ -85,7 +91,7 @@ public class ChatClient : IChatHubReceiver
     {
         _bearer = token;
 
-        Console.WriteLine(token);
+        //Console.WriteLine(token);
 
         var headers = new Metadata();
         
@@ -93,9 +99,7 @@ public class ChatClient : IChatHubReceiver
 
         var callOptions = new CallOptions(headers: headers);
 
-        _hub.DisposeAsync().GetAwaiter().GetResult();
-
-        _hub = StreamingHubClient
+        _workerHub = StreamingHubClient
             .ConnectAsync<IChatHub, IChatHubReceiver>(_channel, this, _host, callOptions)
             .GetAwaiter()
             .GetResult();
