@@ -9,7 +9,6 @@ public class ChatClient : IChatHubReceiver
 {
     public static ChatClient Instance => new();
 
-    private IChatHub _joinHub;
     private IChatHub _workerHub;
     private GrpcChannel _channel;
     private string _bearer;
@@ -21,6 +20,7 @@ public class ChatClient : IChatHubReceiver
 
     public async Task ConnectAsync(string userName)
     {
+        IChatHub joinHub = default!;
         try
         {
             AppContext.SetSwitch(
@@ -38,9 +38,9 @@ public class ChatClient : IChatHubReceiver
                 HttpHandler = httpHandler
             });
 
-            _joinHub = await StreamingHubClient.ConnectAsync<IChatHub, IChatHubReceiver>(_channel, this);
+            joinHub = await StreamingHubClient.ConnectAsync<IChatHub, IChatHubReceiver>(_channel, this);
 
-            await _joinHub.JoinAsync(userName);
+            await joinHub.ConnectAsync(userName);
         }
         catch (RpcException ex) 
         {
@@ -50,7 +50,7 @@ public class ChatClient : IChatHubReceiver
         }
         finally
         {
-            _joinHub.DisposeAsync().GetAwaiter().GetResult();
+            joinHub?.DisposeAsync().GetAwaiter().GetResult();
         }
     }
 
@@ -80,21 +80,22 @@ public class ChatClient : IChatHubReceiver
 
     public void OnReceiveMessage(MessageRecievedEvent message)
     {
-        var result = _messageBuilder.WithPrefix(message.Message.Author).WithContent(message.Message.Text).Build();
+        var result = _messageBuilder
+            .WithPrefix(message.Message.Author)
+            .WithContent(message.Message.Text)
+            .Build();
 
-        if (result.IsFailure) return;
-        
-        Console.WriteLine(result.Value);
+        Console.WriteLine(
+            result.IsFailure 
+            ? string.Format("Error: {0} - {1}", result.Error.Code, result.Error.Message) 
+            : result.Value);
     }
 
     public void OnUserJoined(string token)
     {
         _bearer = token;
 
-        //Console.WriteLine(token);
-
-        var headers = new Metadata();
-        
+        var headers = new Metadata();        
         headers.Add("Authorization", string.Format("Bearer {0}", _bearer)); 
 
         var callOptions = new CallOptions(headers: headers);
@@ -103,5 +104,7 @@ public class ChatClient : IChatHubReceiver
             .ConnectAsync<IChatHub, IChatHubReceiver>(_channel, this, _host, callOptions)
             .GetAwaiter()
             .GetResult();
+
+        _workerHub.JoinAsync().GetAwaiter().GetResult();
     }
 }

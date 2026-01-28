@@ -39,7 +39,7 @@ public class ChatHub : StreamingHubBase<IChatHub, IChatHubReceiver>, IChatHub
     }
 
     [AllowAnonymous]
-    public async ValueTask JoinAsync(string userName)
+    public async ValueTask ConnectAsync(string userName)
     {
         var user = new ChatUser(ConnectionId, userName);
 
@@ -59,11 +59,33 @@ public class ChatHub : StreamingHubBase<IChatHub, IChatHubReceiver>, IChatHub
         }
         try
         {
-            await _groupService.AddMemberAsync(user, Client);
-
             string token = _tokenGenerator.GenerateToken(user);
 
-            _groupService.SendToken(user, token);
+            Client.OnUserJoined(token);
+        }
+        catch (Exception ex)
+        {
+            if (_groupService.Contains(user))
+            {
+                await _groupService.RemoveMemberAsync(user);
+            }
+
+            HandleError(user, new Error("Error.CannotJoinChat", ex.Message));
+
+            return;
+        }
+    }
+
+    [Authorize]
+    public async ValueTask JoinAsync()
+    {
+        var user = new ChatUser(ConnectionId, _currentUser.Name);
+
+        bool isMember = _groupService.Contains(user);
+
+        try
+        {
+            await _groupService.AddMemberAsync(user, Client);
         }
         catch (Exception ex)
         {
@@ -80,7 +102,7 @@ public class ChatHub : StreamingHubBase<IChatHub, IChatHubReceiver>, IChatHub
         _groupService.BroadcastMessage(
             ChatTextMessageModel.Create(
                     _systemMessageProvider.SystemPrefix,
-                    _systemMessageProvider.GetUserJoinedChatMessage(userName)
+                    _systemMessageProvider.GetUserJoinedChatMessage(_currentUser.Name)
                     ));
     }
 
@@ -90,6 +112,7 @@ public class ChatHub : StreamingHubBase<IChatHub, IChatHubReceiver>, IChatHub
 
         _groupService.SendError(user, error);
     }
+
     [Authorize]
     public async ValueTask LeaveAsync()
     {
