@@ -45,15 +45,11 @@ public class ChatHub : StreamingHubBase<IChatHub, IChatHubReceiver>, IChatHub
 
         bool isMember = _groupService.Contains(user);
 
-        if (_userValidator.IsValidNickName(user) is false) 
+        if (isMember || _userValidator.IsValidNickName(user) is false) 
         {
-            Client.OnReceiveMessage(
-                new MessageRecievedEvent 
-                {
-                    Message = ChatTextMessageModel.Create(
-                        userName,
-                        _systemMessageProvider.GetInvalidUserNameMessage(userName))
-                });
+            HandleError(new Error(
+                "Error.CannotJoinChat",
+                _systemMessageProvider.GetInvalidUserNameMessage(userName)));
 
             return; 
         }
@@ -71,8 +67,6 @@ public class ChatHub : StreamingHubBase<IChatHub, IChatHubReceiver>, IChatHub
             }
 
             HandleError(user, new Error("Error.CannotJoinChat", ex.Message));
-
-            return;
         }
     }
 
@@ -80,8 +74,6 @@ public class ChatHub : StreamingHubBase<IChatHub, IChatHubReceiver>, IChatHub
     public async ValueTask JoinAsync()
     {
         var user = new ChatUser(ConnectionId, _currentUser.Name);
-
-        bool isMember = _groupService.Contains(user);
 
         try
         {
@@ -94,7 +86,7 @@ public class ChatHub : StreamingHubBase<IChatHub, IChatHubReceiver>, IChatHub
                 await _groupService.RemoveMemberAsync(user);
             }
 
-            HandleError(user, new Error("Error.CannotJoinChat", ex.Message));
+            HandleError(new Error("Error.CannotJoinChat", ex.Message));
 
             return;
         }
@@ -104,6 +96,13 @@ public class ChatHub : StreamingHubBase<IChatHub, IChatHubReceiver>, IChatHub
                     _systemMessageProvider.SystemPrefix,
                     _systemMessageProvider.GetUserJoinedChatMessage(_currentUser.Name)
                     ));
+    }
+
+    private void HandleError(Error error)
+    {
+        Context.CallContext.Status = Grpc.Core.Status.DefaultCancelled;
+
+        Client.OnError(new ErrorModel { Code = error.Code, Message = error.Message});
     }
 
     private void HandleError(ChatUser user, Error error)
@@ -133,6 +132,7 @@ public class ChatHub : StreamingHubBase<IChatHub, IChatHubReceiver>, IChatHub
                 _systemMessageProvider.GetUserLeaveChatMessage(user.Name)
                 ));
     }
+
     [Authorize]
     public ValueTask SendMessageAsync(SendMessageRequest message)
     {
