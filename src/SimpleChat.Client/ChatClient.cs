@@ -20,6 +20,12 @@ public class ChatClient : IChatHubReceiver
 
     public async Task ConnectAsync(string userName)
     {
+        if (IsConnected) 
+        {
+            Console.WriteLine("You are connected already");
+            return; 
+        }
+
         IChatHub joinHub = default!;
         try
         {
